@@ -1,0 +1,35 @@
+version: 2.1
+
+orbs:
+  heroku: circleci/heroku@2.0
+
+executors:
+  python-executor:
+    docker:
+      - image: cimg/python:3.11
+
+jobs:
+  test:
+    executor: python-executor
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies and run tests
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            pytest tests/
+
+workflows:
+  test-and-deploy:
+    jobs:
+      - test
+      - heroku/deploy-via-git:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+          app-name: "${HEROKU_APP_NAME}"
